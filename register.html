@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>إنشاء حساب | متجر الساعات</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #111, #333);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            direction: rtl;
+        }
+        .register-box {
+            background: #fff;
+            padding: 30px;
+            width: 350px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+        .register-box h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .register-box input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .register-box button {
+            width: 100%;
+            padding: 10px;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .register-box button:hover {
+            background: #444;
+        }
+        .register-box p {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .register-box a {
+            color: #000;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="register-box">
+    <h2>إنشاء حساب</h2>
+    <form onsubmit="return register()">
+        <input type="text" id="name" placeholder="الاسم" required>
+        <input type="email" id="email" placeholder="الإيميل" required>
+        <input type="text" id="username" placeholder="اسم المستخدم" required>
+        <input type="password" id="password" placeholder="كلمة المرور" required>
+        <button type="submit">إنشاء حساب</button>
+    </form>
+    <p>لديك حساب؟ <a href="index.html">تسجيل الدخول</a></p>
+</div>
+
+<script>
+function register() {
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    const account = { name, email, username, password };
+    localStorage.setItem('account', JSON.stringify(account));
+
+    alert("تم إنشاء الحساب بنجاح!");
+    window.location.href = "index.html";
+    return false;
+}
+</script>
+
+</body>
+</html>
+

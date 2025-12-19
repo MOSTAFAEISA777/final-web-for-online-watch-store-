@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>متجر الساعات</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            direction: rtl;
+            background: #f4f4f4;
+        }
+        header {
+            background: #000;
+            color: #fff;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        header h1 { margin: 0; }
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-buttons button {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .welcome { padding: 10px 20px; background: #ddd; text-align: center; font-size: 18px; }
+        .products {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+        .product {
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .product img { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; }
+        .product h3 { margin: 10px 0; }
+        .product p { margin: 5px 0; font-weight: bold; }
+        .product button { padding: 5px 10px; background: #000; color: #fff; border: none; border-radius:5px; cursor:pointer; }
+        
+        /* سلة المشتريات Sidebar */
+        #cartSidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100%;
+            background: #fff;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+            transition: 0.3s;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        #cartSidebar.open { right: 0; }
+        #cartSidebar h3 { margin-top:0; }
+        #cartSidebar .closeBtn {
+            background: #000;
+            color:#fff;
+            border:none;
+            padding:5px 10px;
+            cursor:pointer;
+            border-radius:5px;
+            margin-bottom:10px;
+        }
+
+        /* Checkout */
+        input, select, textarea { width:100%; padding:8px; margin:5px 0; border-radius:5px; border:1px solid #ccc; }
+        #checkoutBtn, #submitReviewBtn { width:100%; padding:10px; margin-top:10px; background:#000; color:#fff; border:none; border-radius:5px; cursor:pointer; }
+        #checkoutBtn:hover, #submitReviewBtn:hover { background:#444; }
+
+        /* تقييم المستخدم */
+        #reviews, #userReview { margin:20px; display:none; background:#fff; padding:20px; border-radius:10px; }
+        .review { border-top:1px solid #ccc; padding:5px 0; }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>متجر الساعات</h1>
+    <div class="header-buttons">
+        <button onclick="toggleCart()">🛒 سلة المشتريات (<span id="cartCount">0</span>)</button>
+        <button onclick="logout()">تسجيل خروج</button>
+    </div>
+</header>
+
+<div class="welcome" id="welcomeMsg"></div>
+
+<div class="products" id="products"></div>
+
+<!-- سلة المشتريات Sidebar -->
+<div id="cartSidebar">
+    <button class="closeBtn" onclick="toggleCart()">إغلاق</button>
+    <h3>سلة المشتريات</h3>
+    <div id="cartItems">السلة فارغة</div>
+
+    <!-- زر إظهار Checkout -->
+    <button onclick="showCheckout()" style="margin-top:10px; background:#444; color:#fff;">إتمام الشراء</button>
+
+    <!-- Checkout مخفي افتراضياً -->
+    <div id="checkoutForm" style="display:none; margin-top:10px;">
+        <h3>إتمام الشراء</h3>
+        <label>الاسم الكامل:</label><input type="text" id="fullName" required>
+        <label>الإيميل:</label><input type="email" id="email" required>
+        <label>رقم الهاتف:</label><input type="text" id="phone" required>
+        <label>العنوان:</label><textarea id="address" rows="2" required></textarea>
+        <label>طريقة الدفع:</label>
+        <select id="paymentMethod" required>
+            <option value="">اختر طريقة الدفع</option>
+            <option value="كارت بنكي">كارت بنكي</option>
+            <option value="فوري">فوري</option>
+            <option value="دفع عند الاستلام">دفع عند الاستلام</option>
+        </select>
+        <button id="checkoutBtn">تأكيد الدفع</button>
+    </div>
+</div>
+
+<!-- نموذج التقييم -->
+<div id="userReview">
+    <h3>أضف تقييمك</h3>
+    <label>اختر عدد النجوم:</label>
+    <select id="starRating">
+        <option value="1">⭐</option>
+        <option value="2">⭐⭐</option>
+        <option value="3">⭐⭐⭐</option>
+        <option value="4">⭐⭐⭐⭐</option>
+        <option value="5" selected>⭐⭐⭐⭐⭐</option>
+    </select>
+    <label>تعليقك عن الخدمة:</label>
+    <textarea id="userComment" rows="3" placeholder="اكتب تعليقك..." required></textarea>
+    <button id="submitReviewBtn">إرسال التقييم</button>
+</div>
+
+<div id="reviews">
+    <h3>آراء العملاء</h3>
+</div>
+
+<script>
+const account = JSON.parse(localStorage.getItem('account'));
+if(!account) { window.location.href="index.html"; }
+document.getElementById('welcomeMsg').innerText = `أهلا ${account.name} 👋`;
+
+// بيانات 20 ساعة بأسماء جذابة من مجلد images
+let products = [
+    {name:"رويال كرون", price: Math.floor(Math.random()*500)+100, img:"images/1.jpg"},
+    {name:"ماجستيك", price: Math.floor(Math.random()*500)+100, img:"images/2.jpg"},
+    {name:"أوميغا ستايل", price: Math.floor(Math.random()*500)+100, img:"images/3.jpg"},
+    {name:"لايت نوفا", price: Math.floor(Math.random()*500)+100, img:"images/4.jpg"},
+    {name:"أتلانتيك", price: Math.floor(Math.random()*500)+100, img:"images/5.jpg"},
+    {name:"فيرتوكس", price: Math.floor(Math.random()*500)+100, img:"images/6.jpg"},
+    {name:"كلاسيك تايم", price: Math.floor(Math.random()*500)+100, img:"images/7.jpg"},
+    {name:"إليغانس", price: Math.floor(Math.random()*500)+100, img:"images/8.jpg"},
+    {name:"نوبل كراون", price: Math.floor(Math.random()*500)+100, img:"images/9.jpg"},
+    {name:"ستيل ستار", price: Math.floor(Math.random()*500)+100, img:"images/10.jpg"},
+    {name:"لوكسترا", price: Math.floor(Math.random()*500)+100, img:"images/11.jpg"},
+    {name:"فيرو تايم", price: Math.floor(Math.random()*500)+100, img:"images/12.jpg"},
+    {name:"بريميوم كوتش", price: Math.floor(Math.random()*500)+100, img:"images/13.jpg"},
+    {name:"أوريجينال", price: Math.floor(Math.random()*500)+100, img:"images/14.jpg"},
+    {name:"سيلفر ويف", price: Math.floor(Math.random()*500)+100, img:"images/15.jpg"},
+    {name:"غولدن هورايزن", price: Math.floor(Math.random()*500)+100, img:"images/16.jpg"},
+    {name:"ميستيك تايم", price: Math.floor(Math.random()*500)+100, img:"images/17.jpg"},
+    {name:"إليت كراون", price: Math.floor(Math.random()*500)+100, img:"images/18.jpg"},
+    {name:"سكاي لين", price: Math.floor(Math.random()*500)+100, img:"images/19.jpg"},
+    {name:"فينتاج ستايل", price: Math.floor(Math.random()*500)+100, img:"images/20.jpg"}
+];
+
+let cart = [];
+
+function renderProducts(){
+    const div = document.getElementById('products');
+    div.innerHTML = '';
+    products.forEach((p,i)=>{
+        const prod = document.createElement('div');
+        prod.className='product';
+        prod.innerHTML = `<img src="${p.img}" alt="${p.name}"><h3>${p.name}</h3><p>${p.price} ج</p><button onclick="addToCart(${i})">أضف إلى السلة</button>`;
+        div.appendChild(prod);
+    });
+}
+
+function addToCart(index){
+    cart.push(products[index]);
+    renderCart();
+}
+
+function renderCart(){
+    const cartDiv = document.getElementById('cartItems');
+    const countSpan = document.getElementById('cartCount');
+    countSpan.innerText = cart.length;
+    if(cart.length===0){ cartDiv.innerHTML='السلة فارغة'; return; }
+    cartDiv.innerHTML='';
+    cart.forEach((p,i)=>{
+        const item = document.createElement('div');
+        item.innerHTML=`${p.name} - ${p.price} ج <button onclick="removeFromCart(${i})">حذف</button>`;
+        cartDiv.appendChild(item);
+    });
+}
+
+function removeFromCart(index){ cart.splice(index,1); renderCart(); }
+
+function toggleCart(){
+    const sidebar = document.getElementById('cartSidebar');
+    sidebar.classList.toggle('open');
+}
+
+function showCheckout(){
+    document.getElementById('checkoutForm').style.display='block';
+}
+
+// Checkout
+document.getElementById('checkoutBtn').addEventListener('click', function(){
+    if(cart.length===0){ alert("السلة فارغة!"); return; }
+    const fullName=document.getElementById('fullName').value.trim();
+    const email=document.getElementById('email').value.trim();
+    const phone=document.getElementById('phone').value.trim();
+    const address=document.getElementById('address').value.trim();
+    const paymentMethod=document.getElementById('paymentMethod').value;
+    if(!fullName||!email||!phone||!address||!paymentMethod){ alert("من فضلك املأ جميع الحقول!"); return; }
+
+    alert(`تمت عملية الشراء بنجاح!`);
+
+    cart=[]; renderCart();
+    toggleCart();
+
+    const reviewsSection = document.getElementById('reviews');
+    reviewsSection.style.display='block';
+    reviewsSection.scrollIntoView({behavior:"smooth"});
+
+    document.getElementById('userReview').style.display='block';
+});
+
+// تقييم المستخدم
+document.getElementById('submitReviewBtn').addEventListener('click', function(){
+    const stars=document.getElementById('starRating').value;
+    const comment=document.getElementById('userComment').value.trim();
+    if(!comment){ alert("اكتب تعليقك قبل الإرسال!"); return; }
+    const reviewsSection=document.getElementById('reviews');
+    const newReview=document.createElement('div');
+    newReview.className='review';
+    newReview.innerHTML=`<strong>${account.name}:</strong> ${'⭐'.repeat(stars)} "<em>${comment}</em>"`;
+    reviewsSection.appendChild(newReview);
+
+    document.getElementById('starRating').value=5;
+    document.getElementById('userComment').value='';
+    alert("تم إرسال تقييمك بنجاح! ✅");
+});
+
+function logout(){ localStorage.removeItem('loggedIn'); window.location.href="index.html"; }
+
+renderProducts();
+renderCart();
+</script>
+
+</body>
+</html>
+
